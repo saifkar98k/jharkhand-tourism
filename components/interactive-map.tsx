@@ -31,6 +31,7 @@ export function InteractiveMap() {
       const { data } = await supabase.from("destinations").select("*").order("name", { ascending: true })
 
       if (data) {
+        console.log({data})
         setDestinations(data)
       }
       setIsLoading(false)
