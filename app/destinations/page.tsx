@@ -214,7 +214,7 @@ export default async function DestinationsPage() {
                   </p>
 
                   {/* Default buttons (visible on non-hover) */}
-                  <div className="flex gap-2 opacity-100 group-hover:opacity-0 transition-opacity duration-300">
+                  {/* <div className="flex gap-2 opacity-100 group-hover:opacity-0 transition-opacity duration-300">
                     {destination.map_link && (
                       <Button asChild variant="outline" size="sm" className="flex-1 gap-2">
                         <a href={destination.map_link} target="_blank" rel="noopener noreferrer">
@@ -229,7 +229,7 @@ export default async function DestinationsPage() {
                         Explore
                       </Link>
                     </Button>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             ))}
