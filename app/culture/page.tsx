@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { Landmark, Music, Palette, Calendar, ArrowRight, Users, Sparkles, Heart } from "lucide-react"
+import { Landmark, Music, Palette, Calendar, ArrowRight, Users, Sparkles, Heart, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
