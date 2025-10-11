@@ -18,25 +18,43 @@ interface FavoritesContextType {
   addToFavorites: (destination: Destination) => void
   removeFromFavorites: (destinationId: string) => void
   isFavorite: (destinationId: string) => boolean
+  isLoading: boolean
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined)
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<Destination[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // Load favorites from localStorage on mount
   useEffect(() => {
-    const storedFavorites = localStorage.getItem('favorites')
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites))
+    const loadFavorites = () => {
+      try {
+        const storedFavorites = localStorage.getItem('favorites')
+        if (storedFavorites) {
+          setFavorites(JSON.parse(storedFavorites))
+        }
+      } catch (error) {
+        console.error('Error loading favorites from localStorage:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    loadFavorites()
   }, [])
 
   // Save favorites to localStorage whenever favorites change
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites))
-  }, [favorites])
+    if (!isLoading) {
+      try {
+        localStorage.setItem('favorites', JSON.stringify(favorites))
+      } catch (error) {
+        console.error('Error saving favorites to localStorage:', error)
+      }
+    }
+  }, [favorites, isLoading])
 
   const addToFavorites = (destination: Destination) => {
     setFavorites(prev => {
@@ -57,7 +75,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <FavoritesContext.Provider value={{ favorites, addToFavorites, removeFromFavorites, isFavorite }}>
+    <FavoritesContext.Provider value={{ 
+      favorites, 
+      addToFavorites, 
+      removeFromFavorites, 
+      isFavorite,
+      isLoading 
+    }}>
       {children}
     </FavoritesContext.Provider>
   )

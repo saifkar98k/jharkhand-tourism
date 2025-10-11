@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, ExternalLink, Filter, ArrowRight, Star, Heart, Sparkles } from "lucide-react"
+import { MapPin, ExternalLink, Filter, ArrowRight, Star, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +16,7 @@ interface DestinationsFilterProps {
 
 export function DestinationsFilter({ categories, destinations }: DestinationsFilterProps) {
   const [selectedCategory, setSelectedCategory] = useState("all")
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
+  const { addToFavorites, removeFromFavorites, isFavorite, isLoading } = useFavorites()
 
   const filteredDestinations = selectedCategory === "all" 
     ? destinations 
@@ -72,7 +72,7 @@ export function DestinationsFilter({ categories, destinations }: DestinationsFil
 
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {filteredDestinations?.map((destination) => {
-          const favorite = isFavorite(destination.id)
+          const favorite = !isLoading && isFavorite(destination.id)
           return (
             <Card 
               key={destination.id}
@@ -121,6 +121,7 @@ export function DestinationsFilter({ categories, destinations }: DestinationsFil
                       variant="outline" 
                       className="bg-white/90 backdrop-blur-sm border-white/50 hover:bg-white"
                       onClick={() => handleFavoriteClick(destination)}
+                      disabled={isLoading}
                     >
                       <Heart 
                         className={`h-4 w-4 mr-2 ${favorite ? 'fill-red-500 text-red-500' : ''}`} 
