@@ -380,13 +380,7 @@ export default async function HomePage() {
                     AI Trip Planner
                   </Link>
                 </li>
-                <li>
-                  <Link href="/map" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
-                    <ChevronRight className="h-3 w-3" />
-                    Interactive Map
-                  </Link>
-                </li>
-              </ul>
+               </ul>
             </div>
             
             <div>

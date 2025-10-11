@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Navigation } from "@/components/navigation"
 import { Suspense } from "react"
+import { FavoritesProvider } from "@/context/favorites-context"
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -33,11 +34,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body className="font-sans antialiased"  suppressHydrationWarning={true} >
-        <Suspense fallback={<div>Loading...</div>}>
-          <Navigation />
-          {children}
-        </Suspense>
+      <body className="font-sans antialiased" suppressHydrationWarning={true} >
+        <FavoritesProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Navigation />
+            {children}
+          </Suspense>
+        </FavoritesProvider>
         <Analytics />
       </body>
     </html>
