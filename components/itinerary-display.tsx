@@ -1,123 +1,130 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Download, Share2 } from "lucide-react"
+import { Download, Share2, Loader2 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState } from "react"
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas-pro"  // Replaced html2canvas with html2canvas-pro to support modern color functions like oklch
 interface ItineraryDisplayProps {
   itinerary: string
 }
 export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
+  const [isDownloading, setIsDownloading] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const canShare = useMemo(() => typeof navigator !== 'undefined' && !!navigator.share, [])
   /* ---------- PDF DOWNLOAD ---------- */
 const handleDownloadPDF = async (): Promise<void> => {
+  setIsDownloading(true)
   if (!contentRef.current) {
     console.error("Content reference is null")
+    setIsDownloading(false)
     return
   }
-  const pdf = new jsPDF('p', 'mm', 'a4')
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  const pageHeight = pdf.internal.pageSize.getHeight()
-  const margin = 10
-  const contentWidth = pageWidth - (margin * 2)
-  const maxPageHeight = pageHeight - (margin * 2)
-  // Create a temporary container
-  const tempContainer = document.createElement('div')
-  tempContainer.style.position = 'absolute'
-  tempContainer.style.left = '-9999px'
-  tempContainer.style.top = '0'
-  tempContainer.style.width = `${contentWidth * 3.78}px` // mm to pixels
-  tempContainer.style.backgroundColor = '#ffffff'
-  tempContainer.style.padding = '20px'
-  tempContainer.style.fontFamily = 'Arial, sans-serif'
-  tempContainer.style.fontSize = '12px'
-  tempContainer.style.lineHeight = '1.5'
-  tempContainer.style.color = '#333333'
- 
-  const contentClone = contentRef.current.cloneNode(true) as HTMLElement
-  tempContainer.appendChild(contentClone)
-  document.body.appendChild(tempContainer)
-  await new Promise(resolve => setTimeout(resolve, 300))
-  // Get all block-level elements
-  const elements = Array.from(tempContainer.querySelectorAll('h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, table'))
-  const pageHeightPx = maxPageHeight * 3.78
- 
-  // Group elements into pages
-  const pages: HTMLElement[][] = []
-  let currentPage: HTMLElement[] = []
-  let currentPageHeight = 0
- 
-  for (const element of elements) {
-    const el = element as HTMLElement
-    const rect = el.getBoundingClientRect()
-    const elementHeight = rect.height
+  try {
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const margin = 10
+    const contentWidth = pageWidth - (margin * 2)
+    const maxPageHeight = pageHeight - (margin * 2)
+    // Create a temporary container
+    const tempContainer = document.createElement('div')
+    tempContainer.style.position = 'absolute'
+    tempContainer.style.left = '-9999px'
+    tempContainer.style.top = '0'
+    tempContainer.style.width = `${contentWidth * 3.78}px` // mm to pixels
+    tempContainer.style.backgroundColor = '#ffffff'
+    tempContainer.style.padding = '20px'
+    tempContainer.style.fontFamily = 'Arial, sans-serif'
+    tempContainer.style.fontSize = '12px'
+    tempContainer.style.lineHeight = '1.5'
+    tempContainer.style.color = '#333333'
    
-    // Check if adding this element would exceed page height
-    if (currentPageHeight + elementHeight > pageHeightPx && currentPage.length > 0) {
+    const contentClone = contentRef.current.cloneNode(true) as HTMLElement
+    tempContainer.appendChild(contentClone)
+    document.body.appendChild(tempContainer)
+    await new Promise(resolve => setTimeout(resolve, 300))
+    // Get all block-level elements
+    const elements = Array.from(tempContainer.querySelectorAll('h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, table'))
+    const pageHeightPx = maxPageHeight * 3.78
+   
+    // Group elements into pages
+    const pages: HTMLElement[][] = []
+    let currentPage: HTMLElement[] = []
+    let currentPageHeight = 0
+   
+    for (const element of elements) {
+      const el = element as HTMLElement
+      const rect = el.getBoundingClientRect()
+      const elementHeight = rect.height
+     
+      // Check if adding this element would exceed page height
+      if (currentPageHeight + elementHeight > pageHeightPx && currentPage.length > 0) {
+        pages.push(currentPage)
+        currentPage = [el]
+        currentPageHeight = elementHeight
+      } else {
+        currentPage.push(el)
+        currentPageHeight += elementHeight
+      }
+    }
+   
+    if (currentPage.length > 0) {
       pages.push(currentPage)
-      currentPage = [el]
-      currentPageHeight = elementHeight
-    } else {
-      currentPage.push(el)
-      currentPageHeight += elementHeight
-    }
-  }
- 
-  if (currentPage.length > 0) {
-    pages.push(currentPage)
-  }
- 
-  // Render each page
-  for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-    if (pageIndex > 0) {
-      pdf.addPage()
     }
    
-    // Create container for this page
-    const pageContainer = document.createElement('div')
-    pageContainer.style.position = 'absolute'
-    pageContainer.style.left = '-9999px'
-    pageContainer.style.top = '0'
-    pageContainer.style.width = tempContainer.style.width
-    pageContainer.style.backgroundColor = '#ffffff'
-    pageContainer.style.padding = '20px'
-    pageContainer.style.fontFamily = 'Arial, sans-serif'
-    pageContainer.style.fontSize = '12px'
-    pageContainer.style.lineHeight = '1.5'
-    pageContainer.style.color = '#333333'
+    // Render each page
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+      if (pageIndex > 0) {
+        pdf.addPage()
+      }
+     
+      // Create container for this page
+      const pageContainer = document.createElement('div')
+      pageContainer.style.position = 'absolute'
+      pageContainer.style.left = '-9999px'
+      pageContainer.style.top = '0'
+      pageContainer.style.width = tempContainer.style.width
+      pageContainer.style.backgroundColor = '#ffffff'
+      pageContainer.style.padding = '20px'
+      pageContainer.style.fontFamily = 'Arial, sans-serif'
+      pageContainer.style.fontSize = '12px'
+      pageContainer.style.lineHeight = '1.5'
+      pageContainer.style.color = '#333333'
+     
+      // Add elements for this page
+      pages[pageIndex].forEach(el => {
+        pageContainer.appendChild(el.cloneNode(true))
+      })
+     
+      document.body.appendChild(pageContainer)
+      await new Promise(resolve => setTimeout(resolve, 100))
+     
+      // Capture the page
+      const canvas = await html2canvas(pageContainer, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      })
+     
+      const imgData = canvas.toDataURL('image/png', 1.0)
+      const imgWidth = contentWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+     
+      // Ensure image fits on page
+      const finalHeight = Math.min(imgHeight, maxPageHeight)
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, finalHeight)
+     
+      document.body.removeChild(pageContainer)
+    }
    
-    // Add elements for this page
-    pages[pageIndex].forEach(el => {
-      pageContainer.appendChild(el.cloneNode(true))
-    })
-   
-    document.body.appendChild(pageContainer)
-    await new Promise(resolve => setTimeout(resolve, 100))
-   
-    // Capture the page
-    const canvas = await html2canvas(pageContainer, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      logging: false,
-    })
-   
-    const imgData = canvas.toDataURL('image/png', 1.0)
-    const imgWidth = contentWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-   
-    // Ensure image fits on page
-    const finalHeight = Math.min(imgHeight, maxPageHeight)
-    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, finalHeight)
-   
-    document.body.removeChild(pageContainer)
+    document.body.removeChild(tempContainer)
+    pdf.save('travel-itinerary.pdf')
+  } finally {
+    setIsDownloading(false)
   }
- 
-  document.body.removeChild(tempContainer)
-  pdf.save('travel-itinerary.pdf')
 }
   /* ---------- SHARE / COPY ---------- */
   const handleShare = async () => {
@@ -152,10 +159,11 @@ const handleDownloadPDF = async (): Promise<void> => {
               variant="outline"
               size="sm"
               onClick={handleDownloadPDF}
+              disabled={isDownloading}
               className="gap-2 bg-white dark:bg-gray-800 hover:bg-green-50 border-green-200 dark:border-green-800 transition-all duration-200"
             >
-              <Download className="h-4 w-4" />
-              Download PDF
+              {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {isDownloading ? "Downloading PDF..." : "Download PDF"}
             </Button>
             <Button
               variant="outline"
