@@ -5,31 +5,25 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { useMemo, useRef } from "react"
 import jsPDF from "jspdf"
-import html2canvas from "html2canvas"
-
+import html2canvas from "html2canvas-pro"  // Replaced html2canvas with html2canvas-pro to support modern color functions like oklch
 interface ItineraryDisplayProps {
   itinerary: string
 }
-
 export function ItineraryDisplay({ itinerary }: ItineraryDisplayProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const canShare = useMemo(() => typeof navigator !== 'undefined' && !!navigator.share, [])
-
-  /* ----------  PDF DOWNLOAD  ---------- */
-/* ----------  PDF DOWNLOAD  ---------- */
+  /* ---------- PDF DOWNLOAD ---------- */
 const handleDownloadPDF = async (): Promise<void> => {
   if (!contentRef.current) {
     console.error("Content reference is null")
     return
   }
-
   const pdf = new jsPDF('p', 'mm', 'a4')
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   const margin = 10
   const contentWidth = pageWidth - (margin * 2)
   const maxPageHeight = pageHeight - (margin * 2)
-
   // Create a temporary container
   const tempContainer = document.createElement('div')
   tempContainer.style.position = 'absolute'
@@ -42,27 +36,25 @@ const handleDownloadPDF = async (): Promise<void> => {
   tempContainer.style.fontSize = '12px'
   tempContainer.style.lineHeight = '1.5'
   tempContainer.style.color = '#333333'
-  
+ 
   const contentClone = contentRef.current.cloneNode(true) as HTMLElement
   tempContainer.appendChild(contentClone)
   document.body.appendChild(tempContainer)
-
   await new Promise(resolve => setTimeout(resolve, 300))
-
   // Get all block-level elements
   const elements = Array.from(tempContainer.querySelectorAll('h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, table'))
   const pageHeightPx = maxPageHeight * 3.78
-  
+ 
   // Group elements into pages
   const pages: HTMLElement[][] = []
   let currentPage: HTMLElement[] = []
   let currentPageHeight = 0
-  
+ 
   for (const element of elements) {
     const el = element as HTMLElement
     const rect = el.getBoundingClientRect()
     const elementHeight = rect.height
-    
+   
     // Check if adding this element would exceed page height
     if (currentPageHeight + elementHeight > pageHeightPx && currentPage.length > 0) {
       pages.push(currentPage)
@@ -73,17 +65,17 @@ const handleDownloadPDF = async (): Promise<void> => {
       currentPageHeight += elementHeight
     }
   }
-  
+ 
   if (currentPage.length > 0) {
     pages.push(currentPage)
   }
-  
+ 
   // Render each page
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
     if (pageIndex > 0) {
       pdf.addPage()
     }
-    
+   
     // Create container for this page
     const pageContainer = document.createElement('div')
     pageContainer.style.position = 'absolute'
@@ -96,15 +88,15 @@ const handleDownloadPDF = async (): Promise<void> => {
     pageContainer.style.fontSize = '12px'
     pageContainer.style.lineHeight = '1.5'
     pageContainer.style.color = '#333333'
-    
+   
     // Add elements for this page
     pages[pageIndex].forEach(el => {
       pageContainer.appendChild(el.cloneNode(true))
     })
-    
+   
     document.body.appendChild(pageContainer)
     await new Promise(resolve => setTimeout(resolve, 100))
-    
+   
     // Capture the page
     const canvas = await html2canvas(pageContainer, {
       scale: 2,
@@ -112,23 +104,22 @@ const handleDownloadPDF = async (): Promise<void> => {
       useCORS: true,
       logging: false,
     })
-    
+   
     const imgData = canvas.toDataURL('image/png', 1.0)
     const imgWidth = contentWidth
     const imgHeight = (canvas.height * imgWidth) / canvas.width
-    
+   
     // Ensure image fits on page
     const finalHeight = Math.min(imgHeight, maxPageHeight)
     pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, finalHeight)
-    
+   
     document.body.removeChild(pageContainer)
   }
-  
+ 
   document.body.removeChild(tempContainer)
   pdf.save('travel-itinerary.pdf')
 }
-
-  /* ----------  SHARE / COPY  ---------- */
+  /* ---------- SHARE / COPY ---------- */
   const handleShare = async () => {
     if (canShare) {
       try {
@@ -148,8 +139,7 @@ const handleDownloadPDF = async (): Promise<void> => {
       }
     }
   }
-
-  /* ----------  RENDER  ---------- */
+  /* ---------- RENDER ---------- */
   return (
     <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-green-50/50 dark:from-gray-900 dark:to-green-950/20">
       <CardHeader>
@@ -179,12 +169,11 @@ const handleDownloadPDF = async (): Promise<void> => {
           </div>
         </div>
       </CardHeader>
-
       <CardContent>
         <div
           ref={contentRef}
-          className="prose prose-lg max-w-none dark:prose-invert 
-                     prose-headings:font-serif 
+          className="prose prose-lg max-w-none dark:prose-invert
+                     prose-headings:font-serif
                      prose-h1:bg-gradient-to-r prose-h1:from-green-600 prose-h1:to-blue-600 prose-h1:bg-clip-text prose-h1:text-transparent
                      prose-h2:text-green-700 dark:prose-h2:text-green-300
                      prose-h3:text-blue-600 dark:prose-h3:text-blue-400
